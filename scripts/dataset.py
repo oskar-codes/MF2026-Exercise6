@@ -26,10 +26,10 @@ class SRDataset(torch.utils.data.Dataset):
     random_crop = torchvision.transforms.RandomCrop((64, 64))
 
     # Now use torchvision.transforms.ColorJitter
-    brightness = 0.5
-    contrast = 0.5
-    saturation = 0.5
-    hue = 0.5
+    brightness = 0.2
+    contrast = 0.2
+    saturation = 0.2
+    hue = 0.0
     color_jitter = torchvision.transforms.ColorJitter(brightness, contrast, saturation, hue)
 
     # Use torchvision.transforms.Resize to bilinearly downscale the image by 2

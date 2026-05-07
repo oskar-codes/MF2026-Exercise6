@@ -9,9 +9,11 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from datetime import datetime
 
 number_of_epochs = 50
-learning_rate = 0.001
+learning_rate = 1e-4
 
 if __name__ == '__main__':
+  start_time = datetime.now()
+
   device = 'cuda' if torch.cuda.is_available() else 'cpu'
   print('Using {} device'.format(device))
   if device == 'cuda':
@@ -48,6 +50,8 @@ if __name__ == '__main__':
 
   loss_function = torch.nn.L1Loss().to(device)
 
+  global_step = 0
+
   for epoch in range(number_of_epochs):
     print(f"=== Epoch {epoch+1}/{number_of_epochs} ===")
 
@@ -62,6 +66,8 @@ if __name__ == '__main__':
       loss.backward()
       optimizer.step()
       losses.append(loss.item())
+      writer.add_scalar("Loss/train", loss.item(), global_step)
+      global_step += 1
 
     avg_train_loss = sum(losses) / len(losses)
     print(f"  -> Train L1: {avg_train_loss:.4f}")
@@ -85,16 +91,23 @@ if __name__ == '__main__':
     avg_val_ssim = ssim_total / n
     print(f"  -> Val L1: {avg_val_l1:.4f} | PSNR: {avg_val_psnr:.2f} dB | SSIM: {avg_val_ssim:.4f}")
 
-    writer.add_scalar("Loss/train", avg_train_loss, epoch)
-    writer.add_scalar("Loss/val", avg_val_l1, epoch)
-    writer.add_scalar("Metrics/PSNR", avg_val_psnr, epoch)
-    writer.add_scalar("Metrics/SSIM", avg_val_ssim, epoch)
+    writer.add_scalar("Loss/val", avg_val_l1, global_step)
+    writer.add_scalar("Metrics/PSNR", avg_val_psnr, global_step)
+    writer.add_scalar("Metrics/SSIM", avg_val_ssim, global_step)
 
     # Periodically save the model checkpoint
-    if (epoch + 1) % 2 == 0 or (epoch + 1) == number_of_epochs:
+    if (epoch + 1) % 10 == 0:
       print(f"  -> Saving checkpoint for epoch {epoch + 1}...")
       filename = f"checkpoints/{current_time}/checkpoint_{epoch + 1}.pth"
       os.makedirs(os.path.dirname(filename), exist_ok=True)
       torch.save(model.state_dict(), filename)
 
+  final_filename = f"checkpoints/{current_time}/model.pth"
+  torch.save(model.state_dict(), final_filename)
+
   writer.close()
+
+  end_time = datetime.now()
+  minutes = (end_time - start_time).total_seconds() / 60
+  seconds = (end_time - start_time).total_seconds() % 60
+  print(f"Training completed in {int(minutes)}:{int(seconds):02d}")

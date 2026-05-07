@@ -8,9 +8,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_msssim import ssim, ms_ssim
+from pytorch_msssim import ssim
 from dataset import SRDataset
 from sr_model import BasicSRModel
+import argparse
 
 def evaluate(model, dataloader, device):
     model.eval()
@@ -51,10 +52,12 @@ def main(checkpoint_path):
     print(f'PSNR: {psnr:.2f} dB, SSIM: {ssim_value:.4f}')
 
 if __name__ == '__main__':
-    checkpoint = 30
-    filename = f'checkpoint_{checkpoint}.pth'
-    checkpoint_path = f'checkpoints/{filename}'
+    parser = argparse.ArgumentParser(description='Evaluate a super-resolution model')
+    parser.add_argument('--run', type=str, required=True, help='Name of the run to evaluate (e.g., "run_2024-06-01_12-00-00")')
+    parser.add_argument('--checkpoint', type=str, default="model.pth", help='Specific checkpoint in the run')
+    args = parser.parse_args()
 
-    print(f"Evaluating model from checkpoint: {filename}")
+    checkpoint_path = f"checkpoints/{args.run}/{args.checkpoint}"
+    print(f"Evaluating model at: {checkpoint_path}")
 
     main(checkpoint_path)
