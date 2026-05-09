@@ -64,3 +64,14 @@ Models are sorted by PSNR (and equivalently by SSIM)
 | Bilinear             | 23.82 dB   | 0.7874    |
 | Basic (lr = 1e-6)    | 17.46 dB   | 0.5557    |
 | Basic (lr = 1e-2)    | -119.75 dB | 0.0000    |
+
+# Visual results
+Original castle image:
+![](images/castle.png)
+
+Upscaled image with the basic model (learning rate `1e-4`):
+![](images/castle_sr_basic.png)
+
+Upscaled image with the residual model (learning rate `1e-4`):
+![](images/castle_sr.png)
+
