@@ -3,13 +3,14 @@ import argparse
 
 import torch
 import torchvision
+from res_model import ResSRModel
 from sr_model import BasicSRModel
 
 
-def main(checkpoint_path, image_path, output_path):
+def main(checkpoint_path, image_path, output_path, model_type):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    model = BasicSRModel()
+    model = BasicSRModel() if model_type == "basic" else ResSRModel()
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.to(device)
     model.eval()
@@ -35,6 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint', type=str, default='model.pth', help='Specific checkpoint in the run')
     parser.add_argument('--image', type=str, required=True, help='Path to the input image to upscale')
     parser.add_argument('--output', type=str, default=None, help='Path for the upscaled output image (default: <image>_sr.png)')
+    parser.add_argument('--model', type=str, default="basic", choices=["basic", "residual"], help='Model type to use for inference')
     args = parser.parse_args()
 
     checkpoint_path = f"checkpoints/{args.run}/{args.checkpoint}"
@@ -48,4 +50,4 @@ if __name__ == '__main__':
     print(f"Loading model from: {checkpoint_path}")
     print(f"Upscaling image: {args.image}")
 
-    main(checkpoint_path, args.image, output_path)
+    main(checkpoint_path, args.image, output_path, args.model)
