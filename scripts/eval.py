@@ -13,43 +13,59 @@ from dataset import SRDataset
 from sr_model import BasicSRModel
 import argparse
 
-def evaluate(model, dataloader, device):
-    model.eval()
+def compute_metrics(sr, hr):
+    psnr = 10 * torch.log10(1 / F.mse_loss(sr, hr))
+    ssim_value = ssim(sr, hr, data_range=1.0)
+    return psnr, ssim_value
+
+def evaluate(predict_fn, dataloader, device):
     psnr_total = 0
     ssim_total = 0
     with torch.no_grad():
         for lr, hr in dataloader:
             lr, hr = lr.to(device), hr.to(device)
-            sr = model(lr)
-            psnr_total += 10 * torch.log10(1 / F.mse_loss(sr, hr))
-            ssim_total += ssim(sr, hr, data_range=1.0)
+            sr = predict_fn(lr)
+            psnr, ssim_value = compute_metrics(sr, hr)
+            psnr_total += psnr
+            ssim_total += ssim_value
     avg_psnr = psnr_total / len(dataloader)
     avg_ssim = ssim_total / len(dataloader)
     return avg_psnr.item(), avg_ssim.item()
+
+def upscale(mode):
+    def _upscale(lr):
+        return F.interpolate(lr, scale_factor=2, mode=mode, align_corners=False)
+    return _upscale
 
 def main(checkpoint_path):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     data_path = "data/eval"
-    eval_dataset = SRDataset(data_path)
+    eval_dataset = SRDataset(data_path, augment=False)
 
     eval_loader = torch.utils.data.DataLoader(
       eval_dataset,
       batch_size=4,
-      shuffle=True,
+      shuffle=False,
       num_workers=2,
       drop_last=True,
       pin_memory=True,
     )
 
+    # Baselines: traditional bilinear and bicubic upscaling
+    for mode in ('bilinear', 'bicubic'):
+        psnr, ssim_value = evaluate(upscale(mode), eval_loader, device)
+        print(f'[{mode:>8}] PSNR: {psnr:.2f} dB, SSIM: {ssim_value:.4f}')
+
     # Load pre-trained model
     model = BasicSRModel()
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.to(device)
+    model.eval()
 
     # Evaluate the model
     psnr, ssim_value = evaluate(model, eval_loader, device)
-    print(f'PSNR: {psnr:.2f} dB, SSIM: {ssim_value:.4f}')
+    print(f'[{"model":>8}] PSNR: {psnr:.2f} dB, SSIM: {ssim_value:.4f}')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate a super-resolution model')
