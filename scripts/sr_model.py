@@ -1,8 +1,6 @@
-
-import torch
 import torch.nn as nn
 
-class BasicSRModel(torch.nn.Module):
+class BasicSRModel(nn.Module):
   def __init__(self, blocks = 10, *args, **kwargs) -> None:
     super().__init__(*args, **kwargs)
 
@@ -46,9 +44,9 @@ class BasicSRModel(torch.nn.Module):
   
 
 if __name__ == '__main__':
-  model = BasicSRModel(blocks = 10)
+  model = BasicSRModel()
   num_params = 0
   for param in model.parameters():
     num_params += param.numel()
-  print(num_params)
+  print(f"Number of parameters: {num_params}")
 
