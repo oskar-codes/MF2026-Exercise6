@@ -1,5 +1,6 @@
 ms_ex6_revised.pdf
 data
-outputs
 checkpoints
 __pycache__
+runs
+*.png
