@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from pytorch_msssim import ssim
 from dataset import SRDataset
 from sr_model import BasicSRModel
+from res_model import ResSRModel
 import argparse
 
 def compute_metrics(sr, hr):
@@ -37,7 +38,7 @@ def upscale(mode):
         return F.interpolate(lr, scale_factor=2, mode=mode, align_corners=False)
     return _upscale
 
-def main(checkpoint_path):
+def main(checkpoint_path, model_type):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     data_path = "data/eval"
@@ -58,7 +59,7 @@ def main(checkpoint_path):
         print(f'[{mode:>8}] PSNR: {psnr:.2f} dB, SSIM: {ssim_value:.4f}')
 
     # Load pre-trained model
-    model = BasicSRModel()
+    model = BasicSRModel() if model_type == "basic" else ResSRModel()
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.to(device)
     model.eval()
@@ -71,9 +72,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate a super-resolution model')
     parser.add_argument('--run', type=str, required=True, help='Name of the run to evaluate (e.g., "run_2024-06-01_12-00-00")')
     parser.add_argument('--checkpoint', type=str, default="model.pth", help='Specific checkpoint in the run')
+    parser.add_argument('--model', type=str, default="basic", choices=["basic", "residual"], help='Model type to evaluate')
     args = parser.parse_args()
 
     checkpoint_path = f"checkpoints/{args.run}/{args.checkpoint}"
     print(f"Evaluating model at: {checkpoint_path}")
 
-    main(checkpoint_path)
+    main(checkpoint_path, args.model)
