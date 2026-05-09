@@ -17,7 +17,6 @@ class SRDataset(torch.utils.data.Dataset):
 
   def __getitem__(self, idx):
     # Load the data from the file
-    # Use torchvision.io.read_image(image_path)
     image_path = self.filenames[idx]
     image = torchvision.io.read_image(image_path)
 
@@ -25,10 +24,10 @@ class SRDataset(torch.utils.data.Dataset):
     image = image.float() / 255.0
 
     if self.augment:
-      # Use torchvision.transforms.RandomCrop, to randomly crop a 64x64 square
+      # Randomly crop a 64x64 square
       crop = torchvision.transforms.RandomCrop((64, 64))
 
-      # Now use torchvision.transforms.ColorJitter
+      # ColorJitter
       brightness = 0.2
       contrast = 0.2
       saturation = 0.2
@@ -40,10 +39,10 @@ class SRDataset(torch.utils.data.Dataset):
         color_jitter,
       ])
     else:
-      # No augmentation: deterministic center crop and no color jitter
+      # No augmentation, used for evaluation
       transforms = torchvision.transforms.CenterCrop((64, 64))
 
-    # Use torchvision.transforms.Resize to bilinearly downscale the image by 2
+    # Bilinearly downscale the image by 2
     resize = torchvision.transforms.Resize(
       (32, 32),
       interpolation=InterpolationMode.BILINEAR,

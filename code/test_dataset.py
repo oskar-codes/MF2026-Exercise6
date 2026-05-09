@@ -1,7 +1,3 @@
-# You create an object from the dataset class:
-# For example: train_dataset = SRDataset(data_path)
-# Assuming the train_dataset object is properly initialized
-# and that the __getitem__ returns a pair of images
 import torch
 import torchvision
 

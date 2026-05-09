@@ -14,7 +14,6 @@ class BasicSRModel(nn.Module):
       padding=1,
     )
 
-    # Blocks of Conv2d -> LeakyReLU (use nn.Sequential for this)
     self.blocks = nn.Sequential(*[
       nn.Sequential(
         nn.Conv2d(

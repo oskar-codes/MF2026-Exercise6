@@ -1,10 +1,3 @@
-# - Run the evaluation on the provided eval dataset. To set a baseline, do the evaluation with
-# traditional bilinear and bicubic upscaling methods. Do not augment the evaluation images.
-# - Load a pre-trained model from a file using torch.load and the method .load state dict,
-# run the evaluation with this model.
-# - Use PSNR and SSIM as metrics (you can use the implementation available in the package
-# pytorch-msssim).
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,11 +8,13 @@ from res_model import ResSRModel
 import argparse
 
 def compute_metrics(sr, hr):
+    # Computer PSNR and SSIM
     psnr = 10 * torch.log10(1 / F.mse_loss(sr, hr))
     ssim_value = ssim(sr, hr, data_range=1.0)
     return psnr, ssim_value
 
 def evaluate(predict_fn, dataloader, device):
+    # Compute average PSNR and SSIM over the dataset
     psnr_total = 0
     ssim_total = 0
     with torch.no_grad():
@@ -34,6 +29,7 @@ def evaluate(predict_fn, dataloader, device):
     return avg_psnr.item(), avg_ssim.item()
 
 def upscale(mode):
+    # HOF function to create an upscaling function for the given mode
     def _upscale(lr):
         return F.interpolate(lr, scale_factor=2, mode=mode, align_corners=False)
     return _upscale
