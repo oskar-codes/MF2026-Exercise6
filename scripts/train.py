@@ -5,19 +5,31 @@ import torch.nn.functional as F
 from pytorch_msssim import ssim
 from dataset import SRDataset
 from sr_model import BasicSRModel
+from res_model import ResSRModel
 from torch.utils.tensorboard.writer import SummaryWriter
 from datetime import datetime
+import argparse
 
-number_of_epochs = 50
+number_of_epochs = 200
 learning_rate = 1e-4
 
 if __name__ == '__main__':
   start_time = datetime.now()
 
+  parser = argparse.ArgumentParser(description='Train the super-resolution model')
+  parser.add_argument('--epochs', type=int, default=number_of_epochs, help='Number of training epochs')
+  parser.add_argument('--lr', type=float, default=learning_rate, help='Learning rate for the optimizer')
+  parser.add_argument('--model', type=str, default='basic', choices=['basic', 'residual'], help='Model architecture to use (basic or residual)')
+  args = parser.parse_args()
+  number_of_epochs = args.epochs
+  learning_rate = args.lr
+  model_choice = args.model
+
   device = 'cuda' if torch.cuda.is_available() else 'cpu'
-  print('Using {} device'.format(device))
+  print('Device: {}'.format(device))
   if device == 'cuda':
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print(f"- GPU: {torch.cuda.get_device_name(0)}")
+  print(f"[model] {model_choice} | [epochs] {number_of_epochs} | [learning_rate] {learning_rate}")
 
   current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
   writer = SummaryWriter(f"runs/experiment_{current_time}")
@@ -43,7 +55,7 @@ if __name__ == '__main__':
     pin_memory=True,
   )
 
-  model = BasicSRModel()
+  model = BasicSRModel() if model_choice == 'basic' else ResSRModel()
   model.to(device)
 
   optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
@@ -96,7 +108,7 @@ if __name__ == '__main__':
     writer.add_scalar("Metrics/SSIM", avg_val_ssim, global_step)
 
     # Periodically save the model checkpoint
-    if (epoch + 1) % 10 == 0:
+    if (epoch + 1) % 50 == 0:
       print(f"  -> Saving checkpoint for epoch {epoch + 1}...")
       filename = f"checkpoints/{current_time}/checkpoint_{epoch + 1}.pth"
       os.makedirs(os.path.dirname(filename), exist_ok=True)
